@@ -17,33 +17,30 @@ type Data struct {
 }
 
 // MakeSendData is sendMe, sendOther를 리턴하는 함수
-func (c *Client) MakeSendData(rData JSON, recieveType string) (JSON, JSON) {
-	var sendMe JSON
-	var sendOther JSON
+func (c *Client) MakeSendData(rData JSON, recieveType string) JSON {
+	var sendData JSON
+
 	switch recieveType {
 	case "open":
 		log.Printf("Received: %s\n", recieveType)
-		sendMe, sendOther = func() (JSON, JSON) {
+		sendData = func() JSON {
 			IDs := c.server.findIDs()
-			m := JSON{c, "welcome", Data{c.id, IDs, ""}}
-			o := JSON{c, "enter", Data{c.id, nil, ""}}
-			return m, o
+			m := JSON{c, "open", Data{c.id, IDs, ""}}
+			return m
 		}()
 	case "close":
 		log.Printf("Received: %s\n", recieveType)
-		sendMe, sendOther = func() (JSON, JSON) {
-			m := JSON{c, "bye", Data{c.id, nil, ""}}
-			o := JSON{c, "exit", Data{c.id, nil, ""}}
-			return m, o
+		sendData = func() JSON {
+			m := JSON{c, "close", Data{c.id, nil, ""}}
+			return m
 		}()
 	case "exp":
 		log.Printf("Received: %s\n", recieveType)
-		sendMe, sendOther = func() (JSON, JSON) {
+		sendData = func() JSON {
 			m := JSON{c, "exp", Data{c.id, nil, rData.Data.Expression}}
-			o := JSON{c, "exp", Data{c.id, nil, rData.Data.Expression}}
-			return m, o
+			return m
 		}()
 	}
 
-	return sendMe, sendOther
+	return sendData
 }

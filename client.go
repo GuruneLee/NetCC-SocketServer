@@ -70,12 +70,12 @@ func (c *Client) readPump() {
 		json.Unmarshal(message, &rData)
 		recieveType := rData.Type
 
-		sendMe, sendOther := c.MakeSendData(rData, recieveType)
+		sendData := c.MakeSendData(rData, recieveType)
 
-		fmt.Println(sendMe)
-		fmt.Println(sendOther)
-		c.server.broadcast <- sendMe
-		c.server.broadcast <- sendOther
+		fmt.Println(sendData)
+		//fmt.Println(sendOther)
+		c.server.broadcast <- sendData
+		//c.server.broadcast <- sendOther
 	}
 }
 
@@ -106,9 +106,12 @@ func (c *Client) writePump() {
 
 			// routing
 			var refineSendData []byte
-			if c.rightMSG(message) {
-				refineSendData, _ = json.Marshal(message)
-			}
+			refineSendData = c.refineMSG(message)
+			/*
+				if c.rightMSG(message) {
+					refineSendData, _ = json.Marshal(message)
+				}
+			*/
 			_, err = w.Write(refineSendData)
 			if err != nil {
 				log.Fatal(err)
@@ -135,29 +138,46 @@ func (c *Client) writePump() {
 	}
 }
 
-func (c *Client) rightMSG(msg JSON) bool {
-	ans := false
+func (c *Client) refineMSG(msg JSON) []byte {
 	conn := msg.C
 	t := msg.Type
-	bar1 := (conn == c) && ((t == "welcome") || (t == "bye"))
-	bar2 := (conn != c) && ((t == "enter") || (t == "exit"))
 
-	if (t == "exp") || bar1 || bar2 {
-		ans = true
+	var ans []byte
+
+	if t != "exp" {
+		switch msg.Type {
+		case "open":
+			if conn == c {
+				msg.Type = "welcome"
+			} else {
+				msg.Type = "enter"
+				msg.Data.IDs = nil
+			}
+		case "close":
+			if conn == c {
+				msg.Type = "bye"
+			} else {
+				msg.Type = "exit"
+			}
+		}
 	}
+
+	ans, _ = json.Marshal(msg)
 
 	return ans
 }
 
 func serveWs(hub *server, w http.ResponseWriter, r *http.Request) {
+	fmt.Println("serveWs1")
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return
 	}
+	fmt.Println("serveWs2")
 	client := &Client{server: hub, conn: conn, id: "000000", send: make(chan JSON)}
 	client.server.register <- client
-
+	fmt.Println("serveWs3")
 	// Allow collection of memory referenced by the caller by doing all work in
 	// new goroutines.
 	go client.writePump()

@@ -21,7 +21,7 @@ type server struct {
 
 func newServer() *server {
 	return &server{
-		broadcast:   make(chan JSON, 2),
+		broadcast:   make(chan JSON),
 		register:    make(chan *Client),
 		unregister:  make(chan *Client),
 		clients:     make(map[*Client]bool),
@@ -38,6 +38,7 @@ func (s *server) run() {
 			s.clients[client] = true
 			//식별자 생성
 			id := s.makeID()
+			fmt.Println(id)
 			//식별자 저장
 			s.identifiers[id] = client
 			client.id = id
@@ -71,19 +72,30 @@ func (s *server) run() {
 func (s *server) makeID() string {
 	const charset = "abcdefghijklmnopqrstuvwxyz" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
-
+	fmt.Println("makeID1")
 	b := make([]byte, 6)
+	IDs := s.findIDs()
+
 	for stop := false; !stop; {
+		fmt.Println("makeID2")
 		for i := range b {
 			b[i] = charset[seededRand.Intn(len(charset))]
 		}
-		for _, v := range s.findIDs() {
-			if v == string(b) {
-				stop = true
-				break
+
+		if len(IDs) != 0 {
+			stop = true
+			for _, v := range s.findIDs() {
+				if v == string(b) {
+					stop = false
+					break
+				}
 			}
+		} else {
+			stop = true
 		}
 	}
+	fmt.Println("makeID3")
+
 	return string(b)
 }
 
