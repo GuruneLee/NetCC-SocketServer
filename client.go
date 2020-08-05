@@ -101,22 +101,29 @@ func (c *Client) writePump() {
 				log.Fatal(err)
 				return
 			} else {
-				fmt.Println("make next writer w")
+				fmt.Println(c, "make next writer w")
 			}
 
 			// routing
 			var refineSendData []byte
-			refineSendData = c.refineMSG(message)
+			refineSendData, unregister := c.refineMSG(message)
 			/*
 				if c.rightMSG(message) {
 					refineSendData, _ = json.Marshal(message)
 				}
 			*/
+			fmt.Println(c, "unre: ", unregister)
+
 			_, err = w.Write(refineSendData)
 			if err != nil {
 				log.Fatal(err)
 			} else {
-				fmt.Println("Message")
+				fmt.Println(c, "Message")
+			}
+
+			if unregister {
+				fmt.Println("unregister01")
+				c.server.unregister <- c
 			}
 			/*// Add queued chat messages to the current websocket message.
 			n := len(c.send)
@@ -138,12 +145,12 @@ func (c *Client) writePump() {
 	}
 }
 
-func (c *Client) refineMSG(msg JSON) []byte {
+func (c *Client) refineMSG(msg JSON) ([]byte, bool) {
 	conn := msg.C
 	t := msg.Type
 
 	var ans []byte
-
+	unre := false
 	if t != "exp" {
 		switch msg.Type {
 		case "open":
@@ -156,6 +163,7 @@ func (c *Client) refineMSG(msg JSON) []byte {
 		case "close":
 			if conn == c {
 				msg.Type = "bye"
+				unre = true
 			} else {
 				msg.Type = "exit"
 			}
@@ -164,7 +172,7 @@ func (c *Client) refineMSG(msg JSON) []byte {
 
 	ans, _ = json.Marshal(msg)
 
-	return ans
+	return ans, unre
 }
 
 func serveWs(hub *server, w http.ResponseWriter, r *http.Request) {

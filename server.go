@@ -45,7 +45,7 @@ func (s *server) run() {
 
 			// resgister: server에서 client, identifiers[client.id] 제거하기
 		case client := <-s.unregister:
-			fmt.Println("unregister")
+			fmt.Println("unregister02")
 			if _, ok := s.clients[client]; ok {
 				delete(s.clients, client)
 				delete(s.identifiers, client.id)
