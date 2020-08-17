@@ -32,7 +32,7 @@ func newServer() *server {
 func (s *server) run() {
 	for {
 		select {
-		// resgister: server에 clients, identifiers 추가하기
+		// register: server에 clients, identifiers 추가하기
 		case client := <-s.register:
 			fmt.Println("register")
 			s.clients[client] = true
@@ -43,7 +43,7 @@ func (s *server) run() {
 			s.identifiers[id] = client
 			client.id = id
 
-			// resgister: server에서 client, identifiers[client.id] 제거하기
+		// unregister: server에서 client, identifiers[client.id] 제거하기
 		case client := <-s.unregister:
 			fmt.Println("unregister02")
 			if _, ok := s.clients[client]; ok {
