@@ -62,20 +62,15 @@ func (c *Client) readPump() {
 				log.Printf("error: %v", err)
 			}
 			break
-		} else {
-			fmt.Println("read some messages")
 		}
 
 		var rData JSON
 		json.Unmarshal(message, &rData)
+		fmt.Println("\nrecieved Data", rData)
 		recieveType := rData.Type
 
 		sendData := c.MakeSendData(rData, recieveType)
-
-		fmt.Println(sendData)
-		//fmt.Println(sendOther)
 		c.server.broadcast <- sendData
-		//c.server.broadcast <- sendOther
 	}
 }
 
@@ -100,38 +95,23 @@ func (c *Client) writePump() {
 			if err != nil {
 				log.Fatal(err)
 				return
-			} else {
-				fmt.Println(c, "make next writer w")
 			}
 
 			// routing
 			var refineSendData []byte
 			refineSendData, unregister := c.refineMSG(message)
-			/*
-				if c.rightMSG(message) {
-					refineSendData, _ = json.Marshal(message)
-				}
-			*/
-			fmt.Println(c, "unre: ", unregister)
 
+			//fmt.Println(c, "unre: ", unregister)
+			fmt.Printf("To %s :// Message: %s\n", c.id, string(refineSendData))
 			_, err = w.Write(refineSendData)
 			if err != nil {
 				log.Fatal(err)
-			} else {
-				fmt.Println(c, "Message")
 			}
 
 			if unregister {
-				fmt.Println("unregister01")
 				c.server.unregister <- c
 			}
-			/*// Add queued chat messages to the current websocket message.
-			n := len(c.send)
-			for i := 0; i < n; i++ {
-				w.Write(newline)
-				w.Write(<-c.send)
-			}
-			*/
+
 			if err := w.Close(); err != nil {
 				return
 			}
@@ -176,16 +156,15 @@ func (c *Client) refineMSG(msg JSON) ([]byte, bool) {
 }
 
 func serveWs(hub *server, w http.ResponseWriter, r *http.Request) {
-	fmt.Println("serveWs1")
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	fmt.Println("serveWs2")
+
 	client := &Client{server: hub, conn: conn, id: "000000", send: make(chan JSON)}
 	client.server.register <- client
-	fmt.Println("serveWs3")
+
 	// Allow collection of memory referenced by the caller by doing all work in
 	// new goroutines.
 	go client.writePump()

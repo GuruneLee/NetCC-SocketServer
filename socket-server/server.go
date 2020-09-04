@@ -6,7 +6,7 @@
 package main
 
 import (
-	"fmt"
+	_ "fmt"
 	"math/rand"
 	"time"
 )
@@ -34,25 +34,25 @@ func (s *server) run() {
 		select {
 		// register: server에 clients, identifiers 추가하기
 		case client := <-s.register:
-			fmt.Println("register")
+			//fmt.Println("register")
 			s.clients[client] = true
 			//식별자 생성
 			id := s.makeID()
-			fmt.Println(id)
+			//fmt.Println("\n", id)
 			//식별자 저장
 			s.identifiers[id] = client
 			client.id = id
 
 		// unregister: server에서 client, identifiers[client.id] 제거하기
 		case client := <-s.unregister:
-			fmt.Println("unregister02")
+			//fmt.Println("unregister02")
 			if _, ok := s.clients[client]; ok {
 				delete(s.clients, client)
 				delete(s.identifiers, client.id)
 				close(client.send)
 			}
 		case msg := <-s.broadcast:
-			fmt.Println("broadcaset some messages")
+			//fmt.Println("broadcaset some messages")
 			// msg: {conn: , type: , data:{id: , expression: }}
 			// conn: &client, nil
 			// broadcast에서 읽어온 msg를 선별해서 각자의 client에 뿌림
@@ -72,12 +72,10 @@ func (s *server) run() {
 func (s *server) makeID() string {
 	const charset = "abcdefghijklmnopqrstuvwxyz" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
-	fmt.Println("makeID1")
 	b := make([]byte, 6)
 	IDs := s.findIDs()
 
 	for stop := false; !stop; {
-		fmt.Println("makeID2")
 		for i := range b {
 			b[i] = charset[seededRand.Intn(len(charset))]
 		}
@@ -94,7 +92,6 @@ func (s *server) makeID() string {
 			stop = true
 		}
 	}
-	fmt.Println("makeID3")
 
 	return string(b)
 }
