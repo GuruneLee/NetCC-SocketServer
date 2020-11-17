@@ -8,10 +8,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/websocket"
-	"log"
 	"net/http"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 const (
@@ -58,9 +58,10 @@ func (c *Client) readPump() {
 		// message 받아오기
 		_, message, err := c.conn.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("error: %v", err)
-			}
+			//if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+			//	fmt.Println("client.go/readPump/ReadMessage error, Error: ", "")
+			//}
+			fmt.Println("client.go/readPump/ReadMessage error, Error: ", "")
 			break
 		}
 
@@ -93,7 +94,7 @@ func (c *Client) writePump() {
 
 			w, err := c.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
-				log.Fatal(err)
+				fmt.Println("client.go/writePump/NextWriter error, Error: ", err.Error())
 				return
 			}
 
@@ -105,7 +106,8 @@ func (c *Client) writePump() {
 			fmt.Printf("To %s :// Message: %s\n", c.id, string(refineSendData))
 			_, err = w.Write(refineSendData)
 			if err != nil {
-				log.Fatal(err)
+				fmt.Println("client.go/writePump/Write error, Error: ", err.Error())
+				return
 			}
 
 			if unregister {
@@ -113,12 +115,14 @@ func (c *Client) writePump() {
 			}
 
 			if err := w.Close(); err != nil {
+				fmt.Println("client.go/writePump/Close error, Error: ", err.Error())
 				return
 			}
 
 		case <-ticker.C:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				fmt.Println("client.go/writePump/WriteMessage error, Error: ", err.Error())
 				return
 			}
 		}
@@ -156,10 +160,10 @@ func (c *Client) refineMSG(msg JSON) ([]byte, bool) {
 }
 
 func serveWs(hub *server, w http.ResponseWriter, r *http.Request) {
-  upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println(err)
+		fmt.Println("client.go/sesrveWs/Upgrade error, Error: ", err.Error())
 		return
 	}
 
