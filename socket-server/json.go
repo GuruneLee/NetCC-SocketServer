@@ -15,8 +15,8 @@ type Data struct {
 	IDs        []string `json:"keys,omitempty"`
 	Expression string   `json:"expression,omitempty"`
 	Eye_dir    string   `json:"eye_dir,omitempty"`
-	IsSpy      bool     `json:"isSpy,omitempty"`
-	Absence    bool     `json:"absence,omitempty"`
+	IsSpy      bool     `json:"isSpy"`
+	Absence    bool     `json:"absence"`
 }
 
 // MakeSendData is sendMe, sendOther를 리턴하는 함수
